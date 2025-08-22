@@ -1,0 +1,26 @@
+# IDE and editor folders
+.idea/
+.vscode/
+
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Git
+.git
+.gitignore
+
+# Docker ignore itself
+.dockerignore
+
+# OS/Editor specific
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+status/
