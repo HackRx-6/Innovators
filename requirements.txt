@@ -1,0 +1,42 @@
+# Core utilities
+python-dotenv
+pytz
+
+# Web server and API
+fastapi
+uvicorn
+starlette
+pydantic
+aiohttp
+aiofiles
+httpx
+requests
+beautifulsoup4
+
+# Document processing
+PyMuPDF  # for fitz (PDF)
+pypdf
+python-docx
+python-pptx
+openpyxl
+pillow
+pytesseract
+
+# Data science and ML
+numpy
+sympy
+
+# LangChain ecosystem
+langchain
+langchain-community
+langchain-experimental
+langchain-openai
+langchain_groq
+langgraph
+langchain-text-splitters
+
+# Vectorstores & embeddings
+qdrant-client[fastembed]
+
+# Retrieval
+rank-bm25~=0.2.2
