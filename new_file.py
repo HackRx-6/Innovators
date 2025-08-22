@@ -250,9 +250,9 @@ Your objective is to achieve the user's goal by breaking it down into a sequence
         * **Priority 3**: Use attribute selectors (e.g., `input[name='username']`).
         * **Avoid**: Vague selectors like `div` or `button` unless absolutely necessary.
 * **`extract_tokens`**:
-    * **Trigger Keywords**: Use when the query asks for a "token", "API key", "secret", or you see a long, random-looking string (especially a JWT) in the page source.
+    * **Trigger Keywords**: Use when the query asks for a "token", "API key", "secret", or "completion code" you see a long, random-looking string (especially a JWT) in the page source.
 * **`get_session_storage_item`**:
-    * **Trigger Keywords**: Use when the query asks for a "session key" or "challenge key", or you explicitly see JavaScript code in the source mentioning `sessionStorage.getItem('some_key')`.
+    * **Trigger Keywords**: Use when the query asks for a "hidden data" or "session key" or "challenge key", or you explicitly see JavaScript code in the source mentioning `sessionStorage.getItem('some_key')`.
 * **`inspect_element_details`**:
     * **Trigger Keywords**: Use when the query asks for a hidden attribute like "data-secret", or when simple scraping doesn't reveal needed information from a specific element.
 
@@ -306,7 +306,7 @@ def setup_driver():
 
 async def main():
     TARGET_URL = "https://register.hackrx.in/showdown/startChallenge/ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiMjlzUjNWNUlqb2lUVlZCV2xwQlRTSXNJbU5vWVd4c1pXNW5aVWxFSWpvaWFHbGtaR1Z1SWl3aWRYTmxja2xrSWpvaWRYTmxjbDl0ZFdGNmVtRnRJaXdpWlcxaGFXd2lPaUp0ZFdGNmVtRnRRR0poYW1GcVptbHVjMlZ5ZG1obFlXeDBhQzVwYmlJc0luSnZiR1VpT2lKamIyOXNYMmQxZVNJc0ltbGhkQ0k2TVRjMU5UZzFPRE01TlN3aVpYaHdJam94TnpVMU9UUTBOemsxZlEuUXRkdmVGWmhnVDVLNEtYcFdpbWRNbTQ5MW1SZThoTjY2cC1jSjFCU2lzTQ=="
-    QUESTION = f"""Go to the website {TARGET_URL} and start the challenge. Complete the challenge and return the answers for the following question?  What is the challenge ID?"""
+    QUESTION = f"""Go to the website {TARGET_URL} and start the challenge. Complete the challenge and return the answers for the following question?  What is the completion Code?"""
 
     global _GLOBAL_DRIVER
     driver = None
