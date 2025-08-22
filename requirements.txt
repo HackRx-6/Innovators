@@ -41,5 +41,5 @@ qdrant-client[fastembed]
 # Retrieval
 rank-bm25~=0.2.2
 
-playwright
+selenium
 pydantic
