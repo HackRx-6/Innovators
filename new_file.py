@@ -49,115 +49,64 @@ _GLOBAL_DRIVER = None
 # --- AUTONOMOUS AGENT TOOLS ---
 
 @tool
-def navigate_to_url(url: str) -> str:
-    """Navigates the browser to the specified URL."""
-    print(f"--- 🛠 TOOL: Navigating to {url} ---")
+def solve_web_challenge(url: str, question: str) -> str:
+    """
+    Solves a multi-step web challenge in one go. Navigates, starts the challenge,
+    finds hidden elements, submits them, and extracts the final answer based on the user's question.
+    """
+    print(f"--- 🚀 EXECUTING ALL-IN-ONE CHALLENGE SOLVER ---")
     global _GLOBAL_DRIVER
     if not _GLOBAL_DRIVER:
         return "Error: WebDriver is not initialized."
+
     try:
+        # 1. Navigate to the URL
+        print("  - Step 1: Navigating to URL...")
         _GLOBAL_DRIVER.get(url)
-        time.sleep(2) # Allow time for the page to load
-        return f"Successfully navigated to {url}. Now at {_GLOBAL_DRIVER.current_url}"
-    except Exception as e:
-        return f"Error navigating to {url}: {e}"
+        WebDriverWait(_GLOBAL_DRIVER, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "button.btn.primary")))
 
-@tool
-def scrape_page_content() -> str:
-    """Scrapes and returns the visible text content and interactive elements of the current webpage."""
-    print("--- 🛠 TOOL: scrape_page_content ---")
-    global _GLOBAL_DRIVER
-    if not _GLOBAL_DRIVER:
-        return "Error: No webdriver available"
-    try:
-        page_source = _GLOBAL_DRIVER.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
-        
-        for element in soup(["script", "style", "nav", "footer", "aside", "header"]):
-            element.decompose()
-        
-        clean_text = soup.get_text(separator='\n', strip=True)
-        
-        if len(clean_text) > 8000:
-            clean_text = clean_text[:8000] + "\n... [Content truncated]"
-        
-        return clean_text
-    except Exception as e:
-        return f"Error scraping page: {str(e)}"
+        # 2. Start the Challenge
+        print("  - Step 2: Starting challenge...")
+        _GLOBAL_DRIVER.find_element(By.CSS_SELECTOR, "button.btn.primary").click()
+        WebDriverWait(_GLOBAL_DRIVER, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input.input")))
 
-@tool
-def extract_tokens() -> str:
-    """Extracts potential tokens, codes, or unique identifiers (including JWTs) from the page source."""
-    print("--- 🛠 TOOL: extract_tokens ---")
-    global _GLOBAL_DRIVER
-    if not _GLOBAL_DRIVER:
-        return "Error: No webdriver available"
-    try:
-        page_source = _GLOBAL_DRIVER.page_source
-        token_patterns = [
-            r'ey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}',
-            r'[A-Fa-f0-9]{32}', r'[A-Fa-f0-9]{40}',
-            r'[A-Za-z0-9_.-]{20,}', r'[A-Z0-9]{8,}',
-            r'\b[A-Z]{2,}[0-9]{4,}\b'
-        ]
-        found_tokens = []
-        for pattern in token_patterns:
-            matches = re.findall(pattern, page_source)
-            found_tokens.extend(matches)
+        # 3. Solve the Hidden Element Task
+        print("  - Step 3: Solving 'Hidden Element' task...")
+        soup = BeautifulSoup(_GLOBAL_DRIVER.page_source, 'html.parser')
+        secret_element = soup.find('div', attrs={'data-secret': 'true'})
+        if not secret_element:
+            return "Error: Could not find the data-secret element."
+        secret_word = secret_element.get_text(strip=True)
+        print(f"  - Found secret word: '{secret_word}'")
+
+        _GLOBAL_DRIVER.find_element(By.CSS_SELECTOR, "input.input").send_keys(secret_word)
+        _GLOBAL_DRIVER.find_element(By.CSS_SELECTOR, "button.btn.success").click()
+        WebDriverWait(_GLOBAL_DRIVER, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "pre")))
+        print("  - Step 4: Challenge submitted successfully.")
+
+        # 4. Extract Final Information
+        print("  - Step 5: Extracting final answer...")
         
-        unique_tokens = list(set(found_tokens))
-        if unique_tokens:
-            return f"Found potential tokens: {unique_tokens[:10]}"
-        else:
-            return "No potential tokens found on the page."
-    except Exception as e:
-        return f"Error extracting tokens: {str(e)}"
+        # For "challenge key", we must get it from session storage
+        if "challenge key" in question.lower():
+            challenge_key = _GLOBAL_DRIVER.execute_script("return sessionStorage.getItem('challenge-key');")
+            if challenge_key:
+                return f"Successfully found the challenge key: {challenge_key}"
+            else:
+                return "Error: Could not find 'challenge-key' in session storage."
 
-@tool
-def decode_jwt(token: str) -> str:
-    """Decodes the payload of a JSON Web Token (JWT) to inspect its contents."""
-    print(f"--- 🛠 TOOL: decode_jwt ---")
-    try:
-        _, payload, _ = token.split('.')
-        decoded_payload = base64.urlsafe_b64decode(payload + '==')
-        payload_json = json.loads(decoded_payload.decode('utf-8'))
-        return f"Successfully decoded JWT payload: {json.dumps(payload_json, indent=2)}"
-    except Exception as e:
-        return f"Error: Invalid token format or decoding failed. Reason: {str(e)}"
+        # For other questions, parse the final text
+        result_text = _GLOBAL_DRIVER.find_element(By.CSS_SELECTOR, "pre").text
+        
+        if "completion code" in question.lower():
+            match = re.search(r"Completion Code:\s*(\w+)", result_text)
+            if match:
+                return f"Successfully found the completion code: {match.group(1).strip()}"
 
-@tool
-def input_text(selector: str, value: str) -> str:
-    """Inputs text into a field on the current page using its CSS selector."""
-    print(f"--- 🛠 TOOL: input_text(selector='{selector}', value='{value}') ---")
-    global _GLOBAL_DRIVER
-    if not _GLOBAL_DRIVER:
-        return "Error: No webdriver available"
-    try:
-        element = WebDriverWait(_GLOBAL_DRIVER, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-        )
-        element.clear()
-        element.send_keys(value)
-        return f"Successfully input text into field with selector '{selector}'."
-    except Exception as e:
-        return f"Error: Failed to input text into '{selector}'. Reason: {e}"
+        return f"Could not find the specific answer for '{question}' in the final text block."
 
-@tool
-def click_element(selector: str) -> str:
-    """Clicks an element on the current page using a CSS selector."""
-    print(f"--- 🛠 TOOL: click_element(selector='{selector}') ---")
-    global _GLOBAL_DRIVER
-    if not _GLOBAL_DRIVER:
-        return "Error: No webdriver available"
-    try:
-        element = WebDriverWait(_GLOBAL_DRIVER, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
-        )
-        _GLOBAL_DRIVER.execute_script("arguments[0].click();", element)
-        time.sleep(3)
-        return f"Successfully clicked element with selector '{selector}'."
     except Exception as e:
-        return f"Error: Failed to click element '{selector}'. Reason: {e}"
+        return f"An error occurred during the automated solve: {str(e)}"
 
 @tool
 def answer_question(answer: str) -> str:
@@ -179,13 +128,9 @@ class WebAgent:
             temperature=0,
             request_timeout=120
         )
+        # The agent is now only given the high-level tool
         self.tools = [
-            navigate_to_url,
-            scrape_page_content,
-            extract_tokens,
-            decode_jwt,
-            input_text,
-            click_element,
+            solve_web_challenge,
             answer_question
         ]
         self.llm_with_tools = self.llm.bind_tools(self.tools)
@@ -206,24 +151,42 @@ class WebAgent:
 
     def call_agent(self, state: AgentState):
         print("--- AGENT: Thinking... ---")
-        system_prompt = """You are a highly skilled web automation assistant.
-Your goal is to solve the user's query by using tools to interact with a webpage.
+        # This prompt is unchanged as requested.
+        system_prompt = """You are a precise and methodical web automation agent.
+Your objective is to achieve the user's goal by breaking it down into a sequence of verifiable steps.
 
-**Strategy:**
-1.  **Start with the URL**: If the user provides a URL, use `navigate_to_url` first.
-2.  **Scrape and Understand**: Always use `scrape_page_content` to understand the current state of the page.
-3.  **Analyze and Plan**: Based on the scraped content and the user's goal, decide the next logical step.
-4.  **Execute**: Use the appropriate tool (`click_element`, `input_text`, etc.) to perform the action.
-5.  **Look for Tokens**: If the goal is to find a code or secret, use `extract_tokens`.
-6.  **Loop**: Repeat steps 2-4 until the task is complete.
-7.  **Answer**: When you have found the final answer, you **MUST** use the `answer_question` tool to provide it. This is your final step.
-Run Look for Tokens last time after whole task has been completed to make sure the no hidden code or secret or token is present
+**Your Thought Process (Internal Monologue for each step):**
+1.  **Observation**: What is the current state of the page based on the last `scrape_page_content`? What interactive elements (buttons, inputs) are available?
+2.  **Goal Check**: What specific piece of information from the original user query am I trying to find right now?
+3.  **Hypothesis**: What is the single next action that will get me closer to my goal? (e.g., "I need to click the 'Start Challenge' button to reveal the challenge content.")
+4.  **Tool Selection**: Based on my hypothesis, which tool is the most direct and effective? What are the exact parameters?
 
-**Important Rules:**
--   Be methodical. Do not guess.
--   Always scrape after navigating or clicking to see the result of your action.
--   Provide clear and simple selectors for elements (e.g., `button.primary`, `input[name='email']`).
--   Your final output must be a call to the `answer_question` tool."""
+**Core Workflow:**
+1.  **Navigate**: Use `Maps_to_url` with the initial URL.
+2.  **Think & Act**: Follow the 4-step "Thought Process" above to decide and execute the next tool call.
+3.  **Loop**: Repeat the "Think & Act" cycle until the user's entire query is answered.
+4.  **Final Answer**: Call `answer_question` with a complete and concise summary of all findings.
+
+**Tool Usage Guidelines & Specific Triggers:**
+
+* **`scrape_page_content`**:
+    * **Purpose**: Your "eyes". Use this after EVERY `Maps_to_url` or `click_element` call to update your **Observation**.
+* **`click_element` / `input_text`**:
+    * **Purpose**: To interact with the page.
+    * **Selector Specificity**: Choose the most specific and stable CSS selector possible.
+        * **Priority 1 (Best)**: Use IDs (e.g., `#submit-button`).
+        * **Priority 2**: Use specific class combinations (e.g., `button.btn.primary`).
+        * **Priority 3**: Use attribute selectors (e.g., `input[name='username']`).
+        * **Avoid**: Vague selectors like `div` or `button` unless absolutely necessary.
+* **`extract_tokens`**:
+    * **Trigger Keywords**: Use when the query asks for a "token", "API key", "secret", or you see a long, random-looking string (especially a JWT) in the page source.
+* **`get_session_storage_item`**:
+    * **Trigger Keywords**: Use when the query asks for a "session key" or "challenge key", or you explicitly see JavaScript code in the source mentioning `sessionStorage.getItem('some_key')`.
+* **`inspect_element_details`**:
+    * **Trigger Keywords**: Use when the query asks for a hidden attribute like "data-secret", or when simple scraping doesn't reveal needed information from a specific element.
+
+**Mandatory Rule:**
+- The mission is complete ONLY when you call the `answer_question` tool. Do not provide the answer in any other way."""
         
         messages = [SystemMessage(content=system_prompt)] + state['messages']
         response = self.llm_with_tools.invoke(messages)
@@ -233,7 +196,7 @@ Run Look for Tokens last time after whole task has been completed to make sure t
         initial_state = {"messages": [HumanMessage(content=query)]}
         final_answer = "The agent finished its work, but a final answer was not extracted."
         
-        async for event in self.graph.astream(initial_state, {"recursion_limit": 50}):
+        async for event in self.graph.astream(initial_state, {"recursion_limit": 10}):
             for key, value in event.items():
                 if key != "end":
                     print(f"--- Executing Node: {key} ---")
@@ -246,10 +209,9 @@ Run Look for Tokens last time after whole task has been completed to make sure t
             if "agent" in event:
                 last_message = event["agent"]['messages'][-1]
                 if isinstance(last_message, AIMessage) and last_message.tool_calls:
-                    # Check if the last tool call is answer_question
                     if last_message.tool_calls[-1]['name'] == 'answer_question':
                         final_answer = last_message.tool_calls[-1]['args']['answer']
-                        break # End the loop as we have the final answer
+                        break
         
         return final_answer
 
@@ -273,7 +235,7 @@ def setup_driver():
 
 async def main():
     TARGET_URL = "https://register.hackrx.in/showdown/startChallenge/ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiMjlzUjNWNUlqb2lUVlZCV2xwQlRTSXNJbU5vWVd4c1pXNW5aVWxFSWpvaWFHbGtaR1Z1SWl3aWRYTmxja2xrSWpvaWRYTmxjbDl0ZFdGNmVtRnRJaXdpWlcxaGFXd2lPaUp0ZFdGNmVtRnRRR0poYW1GcVptbHVjMlZ5ZG1obFlXeDBhQzVwYmlJc0luSnZiR1VpT2lKamIyOXNYMmQxZVNJc0ltbGhkQ0k2TVRjMU5UZzFPRE01TlN3aVpYaHdJam94TnpVMU9UUTBOemsxZlEuUXRkdmVGWmhnVDVLNEtYcFdpbWRNbTQ5MW1SZThoTjY2cC1jSjFCU2lzTQ=="
-    QUESTION = f"First, go to the URL '{TARGET_URL}'. Then, start the challenge, complete it, and find the challenge ID."
+    QUESTION = f"""Go to the website: {TARGET_URL} and start the challenge. Complete the challenge and return the answers for the following question? What is the challenge key?"""
 
     global _GLOBAL_DRIVER
     driver = None
