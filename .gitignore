@@ -1,3 +1,5 @@
 myenv
 .venv
 env
+
+status/*.json
