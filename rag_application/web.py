@@ -21,6 +21,7 @@ import os
 import asyncio
 import json
 import re
+import base64
 from typing import TypedDict, Annotated, List, Optional, Dict
 
 import requests
@@ -75,6 +76,20 @@ def _extract_from_storage_dict(d: Dict[str, str]) -> List[str]:
             if v and len(v) >= 6:
                 candidates.append(v)
     return candidates
+
+def decode_jwt_payload(jwt_token: str) -> dict:
+    """Decode the payload part of a JWT token (Base64URL, no signature verification)."""
+    try:
+        parts = jwt_token.split(".")
+        if len(parts) < 2:
+            return {}
+        payload_b64 = parts[1]
+        # pad to multiple of 4 for Base64URL
+        payload_b64 += "=" * (-len(payload_b64) % 4)
+        decoded = base64.urlsafe_b64decode(payload_b64.encode("utf-8"))
+        return json.loads(decoded.decode("utf-8"))
+    except Exception:
+        return {}
 
 def heuristic_extract_challenge_id(html: str, session_data: Dict[str, str], local_data: Dict[str, str]) -> Optional[str]:
     html = html or ""
@@ -413,6 +428,7 @@ Workflow:
 5) After submitting, use get_page_snapshot once more to view the success screen.
 6) Extract the final Completion Code from the success screen.
 7) When you have it, call submit_completion_code to finish.
+8) Check if answer is JWT encoding then decode it. then return the actual answer.
 
 Constraints:
 - Do not guess element ids. Use ids provided by get_page_snapshot.
