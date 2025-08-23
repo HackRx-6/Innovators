@@ -525,12 +525,7 @@ async def create_workflow(url: str, questions: List[str]) -> dict:
         await browser_manager.close()
 
 # ------------------------- Main -------------------------
-async def web():
-
-    payload ={"url": "https://register.hackrx.in/showdown/startChallenge/ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiMjlzUjNWNUlqb2lUVlZCV2xwQlRTSXNJbU5vWVd4c1pXNW5aVWxFSWpvaWFHbGtaR1Z1SWl3aWRYTmxja2xrSWpvaWRYTmxjbDl0ZFdGNmVtRnRJaXdpWlcxaGFXd2lPaUp0ZFdGNmVtRnRRR0poYW1GcVptbHVjMlZ5ZG1obFlXeDBhQzVwYmlJc0luSnZiR1VpT2lKamIyOXNYMmQxZVNJc0ltbGhkQ0k2TVRjMU5UZzFPRE01TlN3aVpYaHdJam94TnpVMU9UUTBOemsxZlEuUXRkdmVGWmhnVDVLNEtYcFdpbWRNbTQ5MW1SZThoTjY2cC1jSjFCU2lzTQ==",
-        "questions": [
-            "Go to the website and start the challenge. Complete the challenge and return the answers for the following question? What is the challenge ID?",
-            "Go to the website and start the challenge. Complete the challenge and return the answers for the following question? What is the completion code?",]}
+async def web(payload):
 
     print("=" * 80)
     print("🤖 AUTONOMOUS AGENTIC WEB CHALLENGE SOLVER")
