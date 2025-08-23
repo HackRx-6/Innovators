@@ -1,25 +1,24 @@
-FROM python:3.13.5-slim
+FROM python:3.12-slim-bullseye
 
 LABEL authors="Manish Jajoriya"
 
-# Set environment variables to prevent Python from writing .pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system dependencies (tesseract and its dev library)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Install Playwright dependencies and only Chromium browser
+RUN playwright install --with-deps chromium
+
 COPY . .
 
 EXPOSE 8000
