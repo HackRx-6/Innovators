@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from schemas.schema import QueryIn
 from log import log_and_save_response, log_incoming_request
-from rag_application.new import main
+from rag_application.new_web import main
 
 load_dotenv(verbose=True)
 app = FastAPI()
